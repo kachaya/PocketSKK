@@ -1,0 +1,36 @@
+<resources>
+    <!-- 句点 -->
+    <string-array name="kuten_entries">
+        <item>「、」</item>
+        <item>「，」</item>
+    </string-array>
+
+    <string-array name="kuten_values">
+        <item>、</item>
+        <item>，</item>
+    </string-array>
+
+    <!-- 読点 -->
+    <string-array name="touten_entries">
+        <item>「。」</item>
+        <item>「．」</item>
+    </string-array>
+
+    <string-array name="touten_values">
+        <item>。</item>
+        <item>．</item>
+    </string-array>
+
+    <!-- スペース -->
+    <string-array name="space_entries">
+        <item>半角</item>
+        <item>全角</item>
+    </string-array>
+
+    <string-array name="space_values">
+        <item>"\u0020"</item>
+        <item>"\u3000"</item>
+    </string-array>
+
+
+</resources>

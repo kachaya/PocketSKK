@@ -1,0 +1,35 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="入力設定">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="start_kana"
+            app:title="かな入力で開始する" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="ローマ字設定">
+        <ListPreference
+            android:defaultValue="、"
+            android:entries="@array/kuten_entries"
+            android:entryValues="@array/kuten_values"
+            android:key="kuten"
+            android:title="句点"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            android:defaultValue="。"
+            android:entries="@array/touten_entries"
+            android:entryValues="@array/touten_values"
+            android:key="touten"
+            android:title="読点"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            android:defaultValue="\u0020"
+            android:entries="@array/space_entries"
+            android:entryValues="@array/space_values"
+            android:key="space"
+            android:title="スペース"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+
+</PreferenceScreen>
