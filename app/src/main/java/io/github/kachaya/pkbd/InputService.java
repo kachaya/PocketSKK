@@ -3,7 +3,6 @@ package io.github.kachaya.pkbd;
 import android.content.SharedPreferences;
 import android.inputmethodservice.InputMethodService;
 import android.text.InputType;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -20,7 +19,6 @@ public class InputService extends InputMethodService {
     public static final char CHAR_CTRL_G = '\u0007';    // Ctrl+G
     public static final char CHAR_CTRL_Q = '\u0011';    // Ctrl+Q
     public static final char CHAR_CTRL_J = '\u001F';    // Ctrl+Jの0x0Aは'\n'と競合するので別の値で代用する
-    private static final String TAG = "InputService";
 
     // 変換モード
     private static final int CONVERT_MODE_DIRECT = 0;   // 「■モード」確定入力モード
@@ -57,7 +55,6 @@ public class InputService extends InputMethodService {
 
     @Override
     public void onCreate() {
-        Log.d(TAG, "onCreate");
         super.onCreate();
         mDictionary = new Dictionary(this);
         mConverter = new Converter();
@@ -65,7 +62,6 @@ public class InputService extends InputMethodService {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy");
         mDictionary.commit();
         super.onDestroy();
     }
@@ -77,27 +73,23 @@ public class InputService extends InputMethodService {
 
     @Override
     public void onInitializeInterface() {
-        Log.d(TAG, "onInitializeInterface");
         super.onInitializeInterface();
         mInputView = new InputView(this, null);
     }
 
     @Override
     public View onCreateInputView() {
-        Log.d(TAG, "onCreateInputView");
         return mInputView;
     }
 
     @Override
     public void onStartInput(EditorInfo attribute, boolean restarting) {
-        Log.d(TAG, "onStartInput restarting=" + restarting + ",isInputViewShown=" + isInputViewShown());
         super.onStartInput(attribute, restarting);
         startDirectHalfLatinMode();
     }
 
     @Override
     public void onFinishInput() {
-        Log.d(TAG, "onFinishInput");
         mCandidateArray = null;
         mInputView.clearCandidates();
         startDirectHalfLatinMode();
@@ -106,7 +98,6 @@ public class InputService extends InputMethodService {
 
     @Override
     public void onStartInputView(EditorInfo attribute, boolean restarting) {
-        Log.d(TAG, "onStartInputView restarting=" + restarting);
         super.onStartInputView(attribute, restarting);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -218,7 +209,7 @@ public class InputService extends InputMethodService {
                 break;
 
             default:
-                Log.i("processChar", "Unexpected value: mConvertMode=" + mConvertMode);
+                break;
         }
     }
 
@@ -380,7 +371,6 @@ public class InputService extends InputMethodService {
 
     // 「▽モード」へ戻る
     private void resumeKeywordMode() {
-        Log.d(TAG, "resumeKeywordMode Keyword=" + mComposing + ",OkuriChar=" + mOkuriChar + ",Okurigana=" + mOkurigana + ",Composing=" + mRomaji);
         mConvertMode = CONVERT_MODE_KEYWORD;
         mRomaji.setLength(0);
         setComposingTextKeyword();
@@ -428,7 +418,6 @@ public class InputService extends InputMethodService {
                 sb.append(mOkurigana);
             }
             sb.append(mRomaji);
-            Log.d(TAG, "setComposingTextKeyword() text=" + sb);
             ic.setComposingText(sb, 1);
         }
     }
