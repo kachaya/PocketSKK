@@ -3,6 +3,7 @@ package io.github.kachaya.pkbd;
 import android.content.SharedPreferences;
 import android.inputmethodservice.InputMethodService;
 import android.text.InputType;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -11,6 +12,8 @@ import android.view.inputmethod.InputConnection;
 import androidx.preference.PreferenceManager;
 
 public class InputService extends InputMethodService {
+
+    private final String TAG = "InputService";
 
     // 制御用の特別な文字
     public static final char CHAR_KANA = '\uEF01';      // かなモードへ移行するための文字(Alt+Space)
@@ -27,16 +30,16 @@ public class InputService extends InputMethodService {
 
     private int mConvertMode;       // 変換モード
 
+    // 入力モード関連
+    private boolean mIsKana;        // false:英数モード、true:仮名モード
+    private boolean mIsWide;        // false:アスキーモード、true:全英モード
+    private boolean mIsKatakana;    // false:かなモード、true:カナモード
+
     // 文字列構成用
     private final StringBuilder mRomaji = new StringBuilder();      // ローマ字構成用
     private final StringBuilder mComposing = new StringBuilder();   // 見出し語構成用
     private final StringBuilder mOkurigana = new StringBuilder();   // 送り仮名構成用
     private char mOkuriChar;                                        // 送り仮名開始英字(辞書検索用)
-
-    // 入力モード関連
-    private boolean mIsKana;        // false:英数モード、true:仮名モード
-    private boolean mIsWide;        // false:アスキーモード、true:全英モード
-    private boolean mIsKatakana;    // false:かなモード、true:カナモード
     private boolean mIsAbbrev;      // false:仮名見出し、true:半角英数見出し
 
     // 候補
@@ -48,10 +51,6 @@ public class InputService extends InputMethodService {
     private Dictionary mDictionary;
     private Converter mConverter;
     private InputView mInputView;
-
-    private static boolean isKeywordStartChar(char ch) {
-        return ch >= 'A' && ch <= 'Z' && ch != 'L' && ch != 'Q';
-    }
 
     @Override
     public void onCreate() {
@@ -215,33 +214,43 @@ public class InputService extends InputMethodService {
 
     /*
      * 「■モード」処理
+     * ・mRomaji ローマ字構成用
      */
 
     // 「■モード」に戻る(アスキー・全英・かな・カナ)
     private void startDirectMode() {
         mConvertMode = CONVERT_MODE_DIRECT;
+        mKeyword = "";
+        mCandidateArray = null;
         mRomaji.setLength(0);
+        mComposing.setLength(0);
+        mOkurigana.setLength(0);
+        mOkuriChar = '\0';
+        mIsAbbrev = false;
         icSetComposingText("");
     }
 
     // 「■モード」アスキーモード開始
     private void startDirectHalfLatinMode() {
-        mIsKana = false;
         mIsWide = false;
+        mIsKana = false;
+        mIsKatakana = false;
         hideStatusIcon();                               // アイコン表示なし
         startDirectMode();
     }
 
     // 「■モード」全英モード開始
     private void startDirectWideLatinMode() {
-        mIsKana = false;
         mIsWide = true;
+        mIsKana = false;
+        mIsKatakana = false;
         showStatusIcon(R.drawable.ic_stat_wide);        // アイコン表示[Ａ]
         startDirectMode();
     }
 
     // 「■モード」かなモード開始
     private void startDirectHiraganaMode() {
+        mIsWide = false;
         mIsKana = true;
         mIsKatakana = false;
         showStatusIcon(R.drawable.ic_stat_hiragana);    // アイコン表示[あ]
@@ -250,6 +259,7 @@ public class InputService extends InputMethodService {
 
     // 「■モード」カナモード開始
     private void startDirectKatakanaMode() {
+        mIsWide = false;
         mIsKana = true;
         mIsKatakana = true;
         showStatusIcon(R.drawable.ic_stat_katakana);    // アイコン表示[ア]
@@ -258,14 +268,14 @@ public class InputService extends InputMethodService {
 
     // 「■モード」ローマ字の先頭に'n'が残っていたら仮名にして出力
     private void flushDirectRomaji() {
-        if (mRomaji.length() == 1 && mRomaji.charAt(0) == 'n') {
+        if (mRomaji.length() > 0 && mRomaji.charAt(0) == 'n') {
             if (mIsKatakana) {
                 icCommitText("ン");
             } else {
                 icCommitText("ん");
             }
         }
-        mRomaji.setLength(0);
+        mRomaji.setLength(0);   // 'n'の後に文字があっても捨てる
         icSetComposingText("");
     }
 
@@ -321,9 +331,9 @@ public class InputService extends InputMethodService {
                 icSendEnterKey();
             } else {
                 flushDirectRomaji();
-                startDirectMode();      // リスタート
             }
         } else if (ch >= ' ') {
+            // "zl"の'l'や"z/"の'/'等を変換するため先にローマ字かをチェック
             String[] ss = mConverter.parseRomaji(mRomaji.toString() + ch);
             if (ss[0].length() != 0) {
                 if (mIsKatakana) {
@@ -353,7 +363,7 @@ public class InputService extends InputMethodService {
                 } else if (ch == '/') {
                     flushDirectRomaji();
                     startKeywordAbbrevMode();           // 「▽モード(abbrevモード)」へ
-                } else if (isKeywordStartChar(ch)) {
+                } else if (Character.isUpperCase(ch)) {
                     flushDirectRomaji();
                     startKeywordKanaMode();             // 「▽モード」へ
                     processChar(Character.toLowerCase(ch)); // 今回入力された文字を一文字目として処理
@@ -367,41 +377,43 @@ public class InputService extends InputMethodService {
 
     /*
      * 「▽モード」処理
+     * ・入力モードは移行前のまま
+     * ・mRomaji     ローマ字構成用
+     * ・mComposing  見出し語構成用
+     * ・mOkurigana  送り仮名構成用
+     * ・mOkuriChar  送り仮名先頭の小文字アルファベット、'\0'以外なら送り仮名入力中
      */
 
-    // 「▽モード」へ戻る
-    private void resumeKeywordMode() {
+    // 「▽モード」開始
+    private void startKeywordMode() {
         mConvertMode = CONVERT_MODE_KEYWORD;
+        mCandidateArray = null;
+        mInputView.clearCandidates();
+        // 「▼モード」から「▽モード」へ戻る場合はmComposingに見出し語が入っている
+        mOkurigana.setLength(0);
+        mOkuriChar = '\0';
         mRomaji.setLength(0);
         setComposingTextKeyword();
     }
 
     // 「▽モード」abbrevモード開始
     private void startKeywordAbbrevMode() {
-        mConvertMode = CONVERT_MODE_KEYWORD;
         mIsAbbrev = true;
         showStatusIcon(R.drawable.ic_stat_abbrev);      // アイコン表示[Aｱ]
-        mRomaji.setLength(0);
         mComposing.setLength(0);
-        mOkurigana.setLength(0);
-        mOkuriChar = '\0';
-        setComposingTextKeyword();
+        startKeywordMode();
     }
 
     // 「▽モード」仮名モード開始
     private void startKeywordKanaMode() {
-        mConvertMode = CONVERT_MODE_KEYWORD;
         mIsAbbrev = false;
         if (mIsKatakana) {
             showStatusIcon(R.drawable.ic_stat_katakana);    // アイコン表示[ア]
         } else {
             showStatusIcon(R.drawable.ic_stat_hiragana);    // アイコン表示[あ]
         }
-        mRomaji.setLength(0);
         mComposing.setLength(0);
-        mOkurigana.setLength(0);
-        mOkuriChar = '\0';
-        setComposingTextKeyword();
+        startKeywordMode();
     }
 
     // 「▽モード」構成テキストをテキストフィールドに表示
@@ -422,6 +434,18 @@ public class InputService extends InputMethodService {
         }
     }
 
+    // 「▽モード」ローマ字の先頭に'n'が残っていたら"ん"にして返す
+    private String flushKeywordRomaji() {
+        String s;
+        if (mRomaji.length() == 1 && mRomaji.charAt(0) == 'n') {
+            s =  "ん";
+        } else {
+            s = "";
+        }
+        mRomaji.setLength(0);
+        return s;
+    }
+
     // 「▽モード」abbrevモード処理
     private void processCharKeywordAbbrev(char ch) {
         if (ch == CHAR_KANA) {
@@ -438,11 +462,11 @@ public class InputService extends InputMethodService {
             icCommitText(mComposing);       // そのまま確定
             startDirectMode();              // 「■モード」へ
         } else if (ch == '\b') {
-            if (mComposing.length() != 0) {
+            if (mComposing.length() == 0) {
+                startDirectMode();          // 「■モード」へ
+            } else {
                 mComposing.setLength(mComposing.length() - 1);
                 setComposingTextKeyword();
-            } else {
-                startDirectMode();          // 「■モード」へ
             }
         } else if (ch == ' ') {
             mKeyword = mComposing.toString();
@@ -456,6 +480,7 @@ public class InputService extends InputMethodService {
         }
     }
 
+
     // 「▽モード」仮名モード処理
     private void processCharKeywordKana(char ch) {
         if (ch == CHAR_KANA) {
@@ -463,7 +488,6 @@ public class InputService extends InputMethodService {
         } else if (ch == CHAR_CTRL_G) {
             startDirectMode();          // ■モードに戻る
         } else if (ch == '\b') {
-            //Log.d(TAG, "processCharKeywordKana(BS) mComposing=" + mComposing + ",mOkurigana=" + mOkurigana + ",mRomaji=" + mRomaji);
             if ((mComposing.length() + mOkurigana.length() + mRomaji.length()) == 0) {
                 startDirectMode();     // ■モードに戻る
             } else {
@@ -487,10 +511,25 @@ public class InputService extends InputMethodService {
             if (mCandidateArray != null) {
                 startSelectMode();              // ▼モード(接頭辞)へ
             }
-        } else if (ch == ' ') {
-            if (mRomaji.length() == 1 && mRomaji.charAt(0) == 'n') {
-                mComposing.append('ん');
+        } else if (ch == 'l') {
+            startDirectHalfLatinMode();      // アスキーモードへ
+        } else if (ch == 'L') {
+            startDirectWideLatinMode();      // 全英モードへ
+        } else if (ch == 'q') {
+            mComposing.append(flushKeywordRomaji());
+            if (mIsKatakana) {
+                icCommitText(mComposing);                           // ひらがなで確定
+            } else {
+                icCommitText(Converter.toWideKatakana(mComposing)); // カタカナで確定
             }
+            startDirectMode();          // ■モードへ
+        } else if (ch == 'Q') {
+            mComposing.append(flushKeywordRomaji());
+            icCommitText(mComposing);
+            startKeywordKanaMode();        // ▽モードへ
+
+        } else if (ch == ' ') {         // 変換開始(送り仮名なし)
+            mComposing.append(flushKeywordRomaji());
             mKeyword = mComposing.toString();
             mOkurigana.setLength(0);
             mCandidateArray = mDictionary.search(mKeyword);
@@ -498,62 +537,45 @@ public class InputService extends InputMethodService {
                 startSelectMode();   // ▼モードへ
             }
         } else if (ch > ' ') {
-            if (ch == 'l') {
-                startDirectHalfLatinMode();      // アスキーモードへ
-            } else if (ch == 'L') {
-                startDirectWideLatinMode();      // 全英モードへ
-            } else if (ch == 'q') {
-                if (mRomaji.length() == 1 && mRomaji.charAt(0) == 'n') {
-                    mComposing.append('ん');
+            if (Character.isUpperCase(ch)) {        // 'L','Q'以外の大文字
+                ch = Character.toLowerCase(ch);
+                if (mOkuriChar == '\0') {
+                    mOkuriChar = ch;            // 初回は送り仮名文字として採用
+                    mOkurigana.setLength(0);
+                    mRomaji.setLength(0);    // 送り仮名用に初期化
                 }
-                if (mIsKatakana) {
-                    icCommitText(mComposing);                           // ひらがなで確定
-                } else {
-                    icCommitText(Converter.toWideKatakana(mComposing)); // カタカナで確定
-                }
-                startDirectMode();          // ■モードへ
-            } else if (ch == 'Q') {
-                if (mRomaji.length() == 1 && mRomaji.charAt(0) == 'n') {
-                    mComposing.append('ん');
-                }
-                icCommitText(mComposing);
-                startKeywordKanaMode();        // ▽モードへ
-            } else {
-                if (isKeywordStartChar(ch)) {        // 'L','Q'以外の大文字
-                    ch = Character.toLowerCase(ch);
-                    if (mOkuriChar == '\0') {
-                        mOkuriChar = ch;            // 初回は送り仮名文字として採用
-                        mRomaji.setLength(0);    // 送り仮名用に初期化
-                    }
-                    // 下の処理に続く
-                }
-                if (mOkuriChar != '\0') {
-                    // 送り仮名入力中
-                    mRomaji.append(ch);
-                    String[] ss = mConverter.parseRomaji(mRomaji.toString());
-                    if (ss[0].length() != 0 && ss[1].length() == 0) {
-                        mRomaji.setLength(0);
+                // 下の処理に続く
+            }
+            mRomaji.append(ch);
+            String[] ss = mConverter.parseRomaji(mRomaji.toString());
+            if (mOkuriChar != '\0') {
+                // 送り仮名入力中
+                if (ss[0].length() != 0) {
+                    mOkurigana.append(ss[0]);
+                    mRomaji.setLength(0);
+                    mRomaji.append(ss[1]);
+                    if (mRomaji.length() == 0) {    // 送り仮名完成
                         mKeyword = mComposing.toString() + mOkuriChar;  // 辞書の送りありエントリを使用
-                        mOkurigana.append(ss[0]);
                         mCandidateArray = mDictionary.search(mKeyword);
-                        if (mKeyword != null) {
-                            startSelectMode();  // ▼モードへ
+                        if (mCandidateArray != null) {
+                            startSelectMode();      // 「▼モード」へ
+                        }
+                        else {
+                            setComposingTextKeyword();
                         }
                     } else {
-                        mRomaji.setLength(0);
-                        mRomaji.append(ss[1]);
                         setComposingTextKeyword();
                     }
                 } else {
-                    mRomaji.append(ch); // 入力された文字を追加
-                    String[] ss = mConverter.parseRomaji(mRomaji.toString());
-                    if (ss[0].length() != 0) {
-                        mComposing.append(ss[0]);
-                        mRomaji.setLength(0);
-                        mRomaji.append(ss[1]);
-                    }
-                    setComposingTextKeyword();  // 見出し語表示更新
+                    setComposingTextKeyword();
                 }
+            } else {
+                if (ss[0].length() != 0) {
+                    mComposing.append(ss[0]);
+                    mRomaji.setLength(0);
+                    mRomaji.append(ss[1]);
+                }
+                setComposingTextKeyword();  // 見出し語表示更新
             }
         }
     }
@@ -642,9 +664,9 @@ public class InputService extends InputMethodService {
             startDirectMode();          // ■モードへ戻る
 
         } else if (ch == CHAR_CTRL_G) {
-            mCandidateArray = null;
-            mInputView.clearCandidates();
-            resumeKeywordMode();        // ▽モードへ戻る
+            //Log.d(TAG, "Cancel: mComposing=" + mComposing + ",mOkurigana=" + mOkurigana);
+            mComposing.append(mOkurigana);  // 見出し語と送り仮名をまとめて見出し語にする
+            startKeywordMode();         // ▽モードへ戻る
 
         } else if (ch == '?') {     // ▼モードで接尾辞
             commitTextSelect();      // 確定・辞書登録

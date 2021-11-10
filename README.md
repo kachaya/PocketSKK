@@ -10,11 +10,11 @@
 
 ## インストール
 
-apkファイルをダウンロードしてインストールしてください。
+[apkファイル](./PocketSKK.apk)をダウンロードしてインストールしてください。
 
 一部の操作でCtrlキーと文字キーの同時押しが必要となるので、Titan pocket の「設定」→「スマートアシスト」→「ショートカットセッティング」→「Fn key」でプログラマブルキー（カスタムキー）を「Ctrl キー」に設定しておきます。
 
-<img src="Screenshot_Fn_Ctrl.png" style="zoom: 50%;" />
+<img src="Screenshot_Fn_Ctrl.png" style="zoom: 25%;" />
 
 
 
@@ -56,30 +56,30 @@ apkファイルをダウンロードしてインストールしてください�
 
 基本的なキーの割り当てを以下に示します。 
 
-| キー          | 動作                                             |
-| ------------- | ------------------------------------------------ |
-| `alt`+`Space` | 日本語入力オンオフ切り替え                       |
-| `Ctrl+G`      | 現在の操作をキャンセル                           |
-| `Ctrl+B`      | カーソル左移動                                   |
-| `Ctrl+F`      | カーソル右移動                                   |
-| `Ctrl+Q`      | アスキー文字を全角アルファベットに変換して確定   |
-| `Ctrl+J`      | アスキーモード・全英モードからカナモードへ       |
-| `Backspace`   | 削除                                             |
-| `Enter`       | 改行または確定                                   |
-| `q`           | かなモードとカナモードのトグル                   |
-| `Q`           | かなモード・カナモードから▽モードへ              |
-| `l`           | かなモード・カナモードからアスキーモードへ       |
-| `L`           | かなモード・カナモードから全英モードへ           |
-| `/`           | ひらがなモードまたはカナモードからAbbrevモードへ |
-| `?`           | 接頭辞・接尾辞                                   |
-| `x`           | 前候補選択                                       |
-| `Space`       | 変換開始・次候補選択                             |
+| キー          | 動作                                           |
+| ------------- | ---------------------------------------------- |
+| `alt`+`Space` | 日本語入力オンオフ切り替え                     |
+| `Ctrl+G`      | 現在の操作をキャンセル                         |
+| `Ctrl+B`      | カーソル左移動                                 |
+| `Ctrl+F`      | カーソル右移動                                 |
+| `Ctrl+Q`      | アスキー文字を全角アルファベットに変換して確定 |
+| `Ctrl+J`      | アスキーモード・全英モードからカナモードへ     |
+| `Backspace`   | 削除                                           |
+| `Enter`       | 改行または確定                                 |
+| `q`           | かなモードとカナモードのトグル                 |
+| `Q`           | かなモード・カナモードから▽モードへ            |
+| `l`           | かなモード・カナモードからアスキーモードへ     |
+| `L`           | かなモード・カナモードから全英モードへ         |
+| `/`           | かなモード・カナモードからAbbrevモードへ       |
+| `?`           | 接頭辞・接尾辞                                 |
+| `x`           | 前候補選択                                     |
+| `Space`       | 変換開始・次候補選択                           |
 
 `Backspace`と`Enter`キーは入力領域の状態に依って動作が変化します。例えば`Ctrl+A`でテキストを全選択した状態で`Backspace`キーを押下すると選択された部分がすべて削除されます。
 
 変換候補で確定した候補はユーザ辞書の先頭に登録され、次の候補検索の先頭に現れるようになります。
 
-見出しモード（▽モード）で見出し語を入力して、スペースキーを押下すると変換候補一覧が表示されます。
+▽モードで見出し語を入力して、スペースキーを押下すると変換候補一覧が表示されます。
 
 
 標準的なSKKでは接尾語の変換開始に`>` `<` `?` キーが使用できますが、本ソフトウェアでは▼モードの間は候補が表示されるため `<` や `>` を入力することができません。そのため接尾語の変換開始のキーは `?` のみになっています。
@@ -149,112 +149,89 @@ apkファイルをダウンロードしてインストールしてください�
 ### MapDB
 本ソフトウェアはデータベースエンジンとして [MapDB](https://github.com/jankotek/MapDB/tree/release-1.0) Version 1.0.9 を使用しています。
 
-> MapDB
-> Copyright 2012-2014 Jan Kotek
->
-> This product includes software developed by Thomas Mueller and H2 group
-> Relicensed under Apache License 2 with Thomas permission.
-> (CompressLZF.java and EncryptionXTEA.java)
-> Copyright (c) 2004-2011 H2 Group
->
->
-> This product includes software developed by Doug Lea and JSR 166 group:
-> (LongConcurrentMap.java, Atomic.java)
->  * Written by Doug Lea with assistance from members of JCP JSR-166
->  * Expert Group and released to the public domain, as explained at
->  * http://creativecommons.org/licenses/publicdomain
->
->
-> This product includes software developed for Apache Solr
-> (LongConcurrentLRUMap.java)
-> Copyright 2006-2014 The Apache Software Foundation
->
-> This product includes software developed for Apache Harmony
-> (LongHashMap.java)
-> Copyright 2008-2012 The Apache Software Foundation
->
->
-> This product includes software developed by Nathen Sweet for Kryo
-> Relicensed under Apache License 2 (or later) with Nathans permission.
-> (DataInput2.packInt/Long and DataOutput.unpackInt/Long methods)
-> Copyright (c) 2012 Nathan Sweet
->
-> This product includes software developed for Android project
-> (SerializerPojo, a few lines to invoke constructor, see comments)
-> //Copyright (C) 2012 The Android Open Source Project, licenced under Apache 2 license
->
-> This product includes software developed by Heinz Kabutz for javaspecialists.eu
-> (SerializerPojo, a few lines to invoke constructor, see comments)
-> 2010-2014 Heinz Kabutz
->
->Some Map unit tests are from  Google Collections.
-> Credit goes to Jared Levy, George van den Driessche and other Google Collections developers.
-> Copyright (C) 2007 Google Inc.
-> 
->Luc Peuvrier wrote some unit tests for ConcurrerentNavigableMap interface.
+```
+MapDB
+Copyright 2012-2014 Jan Kotek
+
+This product includes software developed by Thomas Mueller and H2 group
+Relicensed under Apache License 2 with Thomas permission.
+(CompressLZF.java and EncryptionXTEA.java)
+Copyright (c) 2004-2011 H2 Group
+
+This product includes software developed by Doug Lea and JSR 166 group:
+(LongConcurrentMap.java, Atomic.java)
+
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/licenses/publicdomain
+
+
+This product includes software developed for Apache Solr
+(LongConcurrentLRUMap.java)
+Copyright 2006-2014 The Apache Software Foundation
+
+This product includes software developed for Apache Harmony
+(LongHashMap.java)
+Copyright 2008-2012 The Apache Software Foundation
+
+
+This product includes software developed by Nathen Sweet for Kryo
+Relicensed under Apache License 2 (or later) with Nathans permission.
+(DataInput2.packInt/Long and DataOutput.unpackInt/Long methods)
+Copyright (c) 2012 Nathan Sweet
+
+This product includes software developed for Android project
+(SerializerPojo, a few lines to invoke constructor, see comments)
+//Copyright (C) 2012 The Android Open Source Project, licenced under Apache 2 license
+
+This product includes software developed by Heinz Kabutz for javaspecialists.eu
+(SerializerPojo, a few lines to invoke constructor, see comments)
+2010-2014 Heinz Kabutz
+
+Some Map unit tests are from  Google Collections.
+Credit goes to Jared Levy, George van den Driessche and other Google Collections developers.
+Copyright (C) 2007 Google Inc.
+
+Luc Peuvrier wrote some unit tests for ConcurrerentNavigableMap interface.
+```
 
 
 
 ### SKK辞書
 本ソフトウェアではSKK-JISYO.LをMapDB形式のファイルに変換したものを同梱しています。
 
-> ;; -*- mode: fundamental; coding: euc-jp -*-
-> ;; Large size dictionary for SKK system
-> ;; Copyright (C) 1988-1995, 1997, 1999-2014
-> ;;
-> ;; Masahiko Sato <masahiko@kuis.kyoto-u.ac.jp>
-> ;; Hironobu Takahashi <takahasi@tiny.or.jp>,
-> ;; Masahiro Doteguchi, Miki Inooka,
-> ;; Yukiyoshi Kameyama <kameyama@kuis.kyoto-u.ac.jp>,
-> ;; Akihiko Sasaki, Dai Ando, Junichi Okukawa,
-> ;; Katsushi Sato and Nobuhiro Yamagishi
-> ;; NAKAJIMA Mikio <minakaji@osaka.email.ne.jp>
-> ;; MITA Yuusuke <clefs@mail.goo.ne.jp>
-> ;; SKK Development Team <skk@ring.gr.jp>
-> ;;
-> ;; Maintainer: SKK Development Team <skk@ring.gr.jp>
-> ;; Keywords: japanese
-> ;;
-> ;; This dictionary is free software; you can redistribute it and/or
-> ;; modify it under the terms of the GNU General Public License as
-> ;; published by the Free Software Foundation; either version 2, or
-> ;; (at your option) any later version.
-> ;;
-> ;; This dictionary is distributed in the hope that it will be useful,
-> ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-> ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-> ;; General Public License for more details.
-> ;;
-> ;; You should have received a copy of the GNU General Public License
-> ;; along with Daredevil SKK, see the file COPYING.  If not, write to
-> ;; the Free Software Foundation Inc., 59 Temple Place - Suite 330,
-> ;; Boston, MA 02111-1307, USA.
-> ;;
-> ;; ACKNOWLEDGEMENT
-> ;;
-> ;; この辞書は、SKK 原作者の佐藤雅彦先生が、第 1 版作成のために東北大学
-> ;; 電気通信研究所佐藤研究室 (当時) の学生さん達とともに scratch から作
-> ;; 成されたのをその起源とし、その後、無数のユーザからのユーザ辞書の提
-> ;; 供やフォームによる追加・校閲によって今尚日々メンテナンスされている日
-> ;; 本で最大規模の、GPL による copy free の辞書です。
-> ;;
-> ;; この辞書の作成にご尽力頂いた全ての方に感謝すると共に、これをお読み
-> ;; のあなたのご協力を是非ともお待ちしております。
-> ;;
-> ;;   http://openlab.ring.gr.jp/skk/registdic.cgi
-> ;;
-> ;; にアクセスし、フォームに是非あなたの新語・誤登録指摘・コメントを書
-> ;; いて下さい。
-> ;;
-> ;; また、実際に辞書の編集をしてみたいという方は、
-> ;;
-> ;;   http://openlab.ring.gr.jp/skk/cvs-ja.html#account
-> ;;
-> ;; をご覧の上、cvs account の発行申し込みをして下さい。
-> ;;
-> ;; 辞書の編集方針は skk/dic/READMEs/committers.txt をご参照下さい。
-> ;; そこに記載のない事項、またその変更については、その都度 SKK Openlab
-> ;; ML で話し合いで決められます。
+```
+;; Large size dictionary for SKK system
+;; Copyright (C) 1988-1995, 1997, 1999-2014
+;;
+;; Masahiko Sato <masahiko@kuis.kyoto-u.ac.jp>
+;; Hironobu Takahashi <takahasi@tiny.or.jp>,
+;; Masahiro Doteguchi, Miki Inooka,
+;; Yukiyoshi Kameyama <kameyama@kuis.kyoto-u.ac.jp>,
+;; Akihiko Sasaki, Dai Ando, Junichi Okukawa,
+;; Katsushi Sato and Nobuhiro Yamagishi
+;; NAKAJIMA Mikio <minakaji@osaka.email.ne.jp>
+;; MITA Yuusuke <clefs@mail.goo.ne.jp>
+;; SKK Development Team <skk@ring.gr.jp>
+;;
+;; Maintainer: SKK Development Team <skk@ring.gr.jp>
+;; Keywords: japanese
+;;
+;; This dictionary is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2, or
+;; (at your option) any later version.
+;;
+;; This dictionary is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with Daredevil SKK, see the file COPYING.  If not, write to
+;; the Free Software Foundation Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+```
 
 
 
