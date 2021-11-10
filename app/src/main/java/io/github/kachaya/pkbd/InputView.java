@@ -86,7 +86,7 @@ public class InputView extends LinearLayout {
     // 候補ボタンクリックハンドラ
     private void onClickCandidateButton(Button b) {
         int index = (int) b.getTag();
-        mInputService.selectCandidate(index);
+        mInputService.clickCandidate(index);
     }
 
     // 候補表示をけして記号表示に戻す

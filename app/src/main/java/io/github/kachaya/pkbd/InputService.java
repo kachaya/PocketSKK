@@ -46,6 +46,7 @@ public class InputService extends InputMethodService {
     private String mKeyword;            // 「▼モード」に渡す辞書検索用文字列
     private String[] mCandidateArray;   // 「▼モード」で辞書検索した結果の候補文字列
     private int mCandidateIndex;        // 「▼モード」で選択中の候補の番号(0～)
+    private boolean mIsClickCommit;     // false:候補クリックで選択する、true:候補クリックで確定する
 
     // 部品
     private Dictionary mDictionary;
@@ -96,6 +97,12 @@ public class InputService extends InputMethodService {
     }
 
     @Override
+    public boolean onEvaluateInputViewShown() {
+        super.onEvaluateInputViewShown();
+        return true;
+    }
+
+    @Override
     public void onStartInputView(EditorInfo attribute, boolean restarting) {
         super.onStartInputView(attribute, restarting);
 
@@ -104,6 +111,8 @@ public class InputService extends InputMethodService {
         mConverter.putRomajiMap(",", sharedPreferences.getString("kuten", "、"));
         mConverter.putRomajiMap(".", sharedPreferences.getString("touten", "。"));
         mConverter.putRomajiMap(" ", sharedPreferences.getString("space", " "));
+
+        mIsClickCommit = sharedPreferences.getBoolean("click_commit", false);
 
         boolean startKana = sharedPreferences.getBoolean("start_kana", true);
         if (startKana) {
@@ -140,6 +149,9 @@ public class InputService extends InputMethodService {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         //Log.d(TAG, "onKeyDown isInputViewShown=" + isInputViewShown() + ",event=" + event);
+        if (!isInputViewShown()) {
+            return super.onKeyDown(keyCode, event);
+        }
         InputConnection ic = getCurrentInputConnection();
         if (ic == null) {
             return super.onKeyDown(keyCode, event);
@@ -612,7 +624,19 @@ public class InputService extends InputMethodService {
         }
     }
 
-    // 「▼モード」入力ビューからの候補ボタンクリック、キーによる次候補・前候補選択
+    // 「▼モード」入力ビューからの候補ボタンクリック
+    public void clickCandidate(int index) {
+        mCandidateIndex = index;
+        if (mIsClickCommit) {
+            commitTextSelect();         // 確定
+            startDirectMode();          // ■モードへ戻る
+        } else {
+            mInputView.selectCandidate(mCandidateIndex);
+            setComposingTextSelect();
+        }
+    }
+
+    // 「▼モード」キーによる次候補・前候補選択
     public void selectCandidate(int index) {
         mCandidateIndex = index;
         mInputView.selectCandidate(mCandidateIndex);

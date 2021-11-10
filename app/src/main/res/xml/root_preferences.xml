@@ -5,6 +5,10 @@
             app:defaultValue="true"
             app:key="start_kana"
             app:title="かな入力で開始する" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="click_commit"
+            app:title="候補クリックで確定する" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="ローマ字設定">
