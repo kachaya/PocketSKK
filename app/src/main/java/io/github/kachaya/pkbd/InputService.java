@@ -1,14 +1,20 @@
 package io.github.kachaya.pkbd;
 
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.text.InputType;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
 public class InputService extends InputMethodService {
@@ -34,13 +40,13 @@ public class InputService extends InputMethodService {
     private boolean mIsKana;        // false:英数モード、true:仮名モード
     private boolean mIsWide;        // false:アスキーモード、true:全英モード
     private boolean mIsKatakana;    // false:かなモード、true:カナモード
+    private boolean mIsAbbrev;      // false:仮名見出し、true:半角英数見出し
 
     // 文字列構成用
     private final StringBuilder mRomaji = new StringBuilder();      // ローマ字構成用
     private final StringBuilder mComposing = new StringBuilder();   // 見出し語構成用
     private final StringBuilder mOkurigana = new StringBuilder();   // 送り仮名構成用
     private char mOkuriChar;                                        // 送り仮名開始英字(辞書検索用)
-    private boolean mIsAbbrev;      // false:仮名見出し、true:半角英数見出し
 
     // 候補
     private String mKeyword;            // 「▼モード」に渡す辞書検索用文字列
@@ -52,6 +58,11 @@ public class InputService extends InputMethodService {
     private Dictionary mDictionary;
     private Converter mConverter;
     private InputView mInputView;
+
+    // 表示
+    private boolean mIsShowMarker;  // false:▽や▼マークを表示しない、true:表示する
+    private int mKeywordBackground;     // ▽モード背景色
+    private int mSelectBackground;      // ▼モード背景色
 
     @Override
     public void onCreate() {
@@ -72,7 +83,14 @@ public class InputService extends InputMethodService {
     }
 
     @Override
+    public void onConfigurationChanged(Configuration config) {
+        //Log.d(TAG, "onConfigurationChanged");
+        updateConfig(config);
+    }
+
+    @Override
     public void onInitializeInterface() {
+        //Log.d(TAG, "onInitializeInterface");
         super.onInitializeInterface();
         mInputView = new InputView(this, null);
     }
@@ -84,14 +102,14 @@ public class InputService extends InputMethodService {
 
     @Override
     public void onStartInput(EditorInfo attribute, boolean restarting) {
+        //Log.d(TAG, "onStartInput");
         super.onStartInput(attribute, restarting);
+        updateConfig(getResources().getConfiguration());
         startDirectHalfLatinMode();
     }
 
     @Override
     public void onFinishInput() {
-        mCandidateArray = null;
-        mInputView.clearCandidates();
         startDirectHalfLatinMode();
         super.onFinishInput();
     }
@@ -112,6 +130,7 @@ public class InputService extends InputMethodService {
         mConverter.putRomajiMap(".", sharedPreferences.getString("touten", "。"));
         mConverter.putRomajiMap(" ", sharedPreferences.getString("space", " "));
 
+        mIsShowMarker = sharedPreferences.getBoolean("show_marker", true);
         mIsClickCommit = sharedPreferences.getBoolean("click_commit", false);
 
         boolean startKana = sharedPreferences.getBoolean("start_kana", true);
@@ -160,6 +179,17 @@ public class InputService extends InputMethodService {
             return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    private void updateConfig(Configuration config) {
+        int nightMode = config.uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
+            mKeywordBackground = ContextCompat.getColor(this, R.color.keyword_bg_dark);
+            mSelectBackground = ContextCompat.getColor(this, R.color.select_bg_dark);
+        } else {
+            mKeywordBackground = ContextCompat.getColor(this, R.color.keyword_bg_light);
+            mSelectBackground = ContextCompat.getColor(this, R.color.select_bg_light);
+        }
     }
 
     private void icCommitText(CharSequence cs) {
@@ -233,13 +263,29 @@ public class InputService extends InputMethodService {
     private void startDirectMode() {
         mConvertMode = CONVERT_MODE_DIRECT;
         mKeyword = "";
-        mCandidateArray = null;
         mRomaji.setLength(0);
         mComposing.setLength(0);
         mOkurigana.setLength(0);
         mOkuriChar = '\0';
         mIsAbbrev = false;
         icSetComposingText("");
+        mCandidateArray = null;
+        if (isInputViewShown()) {
+            mInputView.clearCandidates();
+        }
+        if (mIsKana) {
+            if (mIsKatakana) {
+                showStatusIcon(R.drawable.ic_stat_katakana);    // アイコン表示[ア]
+            } else {
+                showStatusIcon(R.drawable.ic_stat_hiragana);    // アイコン表示[あ]
+            }
+        } else {
+            if (mIsWide) {
+                showStatusIcon(R.drawable.ic_stat_wide);        // アイコン表示[Ａ]
+            } else {
+                hideStatusIcon();                               // アイコン表示なし
+            }
+        }
     }
 
     // 「■モード」アスキーモード開始
@@ -247,7 +293,6 @@ public class InputService extends InputMethodService {
         mIsWide = false;
         mIsKana = false;
         mIsKatakana = false;
-        hideStatusIcon();                               // アイコン表示なし
         startDirectMode();
     }
 
@@ -256,7 +301,6 @@ public class InputService extends InputMethodService {
         mIsWide = true;
         mIsKana = false;
         mIsKatakana = false;
-        showStatusIcon(R.drawable.ic_stat_wide);        // アイコン表示[Ａ]
         startDirectMode();
     }
 
@@ -265,7 +309,6 @@ public class InputService extends InputMethodService {
         mIsWide = false;
         mIsKana = true;
         mIsKatakana = false;
-        showStatusIcon(R.drawable.ic_stat_hiragana);    // アイコン表示[あ]
         startDirectMode();
     }
 
@@ -274,7 +317,6 @@ public class InputService extends InputMethodService {
         mIsWide = false;
         mIsKana = true;
         mIsKatakana = true;
-        showStatusIcon(R.drawable.ic_stat_katakana);    // アイコン表示[ア]
         startDirectMode();
     }
 
@@ -432,17 +474,20 @@ public class InputService extends InputMethodService {
     private void setComposingTextKeyword() {
         InputConnection ic = getCurrentInputConnection();
         if (ic != null) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("▽");
+            int ulStart = 0;
+            String text = mComposing.toString() + mOkurigana.toString() + mRomaji;
             if (mIsKatakana) {
-                sb.append(Converter.toWideKatakana(mComposing));  // 表示上はカタカナ
-                sb.append(Converter.toWideKatakana(mOkurigana));
-            } else {
-                sb.append(mComposing);
-                sb.append(mOkurigana);
+                text = Converter.toWideKatakana(text);
             }
-            sb.append(mRomaji);
-            ic.setComposingText(sb, 1);
+            if (mIsShowMarker) {
+                text = "▽" + text;
+                ulStart = 1;
+            }
+            SpannableString ss = new SpannableString(text);
+            BackgroundColorSpan bcs = new BackgroundColorSpan(mKeywordBackground);
+            ss.setSpan(bcs, 0, ss.length(), Spanned.SPAN_COMPOSING);
+            ss.setSpan(new UnderlineSpan(), ulStart, ss.length(), Spanned.SPAN_COMPOSING);
+            ic.setComposingText(ss, 1);
         }
     }
 
@@ -450,7 +495,7 @@ public class InputService extends InputMethodService {
     private String flushKeywordRomaji() {
         String s;
         if (mRomaji.length() == 1 && mRomaji.charAt(0) == 'n') {
-            s =  "ん";
+            s = "ん";
         } else {
             s = "";
         }
@@ -492,13 +537,28 @@ public class InputService extends InputMethodService {
         }
     }
 
-
     // 「▽モード」仮名モード処理
     private void processCharKeywordKana(char ch) {
         if (ch == CHAR_KANA) {
             startDirectHalfLatinMode();     // アスキーモードへ
         } else if (ch == CHAR_CTRL_G) {
             startDirectMode();          // ■モードに戻る
+        } else if (ch == '\n') {
+            mComposing.append(flushKeywordRomaji());
+            if (mIsKatakana) {
+                icCommitText(Converter.toWideKatakana(mComposing)); // カタカナで確定
+            } else {
+                icCommitText(mComposing);                           // ひらがなで確定
+            }
+            startDirectMode();          // ■モードに戻る
+        } else if (ch == 'q') {
+            mComposing.append(flushKeywordRomaji());
+            if (mIsKatakana) {
+                icCommitText(mComposing);                           // ひらがなで確定
+            } else {
+                icCommitText(Converter.toWideKatakana(mComposing)); // カタカナで確定
+            }
+            startDirectMode();          // ■モードへ
         } else if (ch == '\b') {
             if ((mComposing.length() + mOkurigana.length() + mRomaji.length()) == 0) {
                 startDirectMode();     // ■モードに戻る
@@ -527,14 +587,6 @@ public class InputService extends InputMethodService {
             startDirectHalfLatinMode();      // アスキーモードへ
         } else if (ch == 'L') {
             startDirectWideLatinMode();      // 全英モードへ
-        } else if (ch == 'q') {
-            mComposing.append(flushKeywordRomaji());
-            if (mIsKatakana) {
-                icCommitText(mComposing);                           // ひらがなで確定
-            } else {
-                icCommitText(Converter.toWideKatakana(mComposing)); // カタカナで確定
-            }
-            startDirectMode();          // ■モードへ
         } else if (ch == 'Q') {
             mComposing.append(flushKeywordRomaji());
             icCommitText(mComposing);
@@ -571,8 +623,7 @@ public class InputService extends InputMethodService {
                         mCandidateArray = mDictionary.search(mKeyword);
                         if (mCandidateArray != null) {
                             startSelectMode();      // 「▼モード」へ
-                        }
-                        else {
+                        } else {
                             setComposingTextKeyword();
                         }
                     } else {
@@ -610,17 +661,20 @@ public class InputService extends InputMethodService {
     private void setComposingTextSelect() {
         InputConnection ic = getCurrentInputConnection();
         if (ic != null) {
-            StringBuilder sb = new StringBuilder();
-            String candidate = mCandidateArray[mCandidateIndex];
-            sb.append("▼");
+            int ulStart = 0;
+            String text = mCandidateArray[mCandidateIndex] + mOkurigana;
             if (mIsKatakana) {
-                sb.append(Converter.toWideKatakana(candidate));
-                sb.append(Converter.toWideKatakana(mOkurigana));
-            } else {
-                sb.append(candidate);
-                sb.append(mOkurigana);
+                text = Converter.toWideKatakana(text);
             }
-            ic.setComposingText(sb, 1);
+            if (mIsShowMarker) {
+                text = "▼" + text;
+                ulStart = 1;
+            }
+            SpannableString ss = new SpannableString(text);
+            BackgroundColorSpan bcs = new BackgroundColorSpan(mSelectBackground);
+            ss.setSpan(bcs, 0, ss.length(), Spanned.SPAN_COMPOSING);
+            ss.setSpan(new UnderlineSpan(), ulStart, ss.length(), Spanned.SPAN_COMPOSING);
+            ic.setComposingText(ss, 1);
         }
     }
 
@@ -673,8 +727,6 @@ public class InputService extends InputMethodService {
                 s = Converter.toWideKatakana(s);
             }
             icCommitText(s);            // 確定
-            mCandidateArray = null;
-            mInputView.clearCandidates();
             startDirectMode();          // ■モードへ戻る
 
         } else if (ch == CHAR_KANA) {

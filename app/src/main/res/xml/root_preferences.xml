@@ -11,6 +11,13 @@
             app:title="候補クリックで確定する" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="表示設定">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="show_marker"
+            app:title="▽▼マークを表示する" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="ローマ字設定">
         <ListPreference
             android:defaultValue="、"
@@ -34,6 +41,5 @@
             android:title="スペース"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
-
 
 </PreferenceScreen>
