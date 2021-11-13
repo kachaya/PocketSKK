@@ -8,8 +8,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="keyword_bg_light">#FFCCCCFF</color>
-    <color name="keyword_bg_dark">#FF333399</color>
-    <color name="select_bg_light">#FFFFCCCC</color>
-    <color name="select_bg_dark">#FF993333</color>
+    <color name="keyword_bg">#FFCCCCFF</color>
+    <color name="select_bg">#FFFFCCCC</color>
+
 </resources>

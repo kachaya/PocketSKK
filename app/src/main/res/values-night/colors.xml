@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="keyword_bg">#FF4444AA</color>
+    <color name="select_bg">#FF993333</color>
+</resources>

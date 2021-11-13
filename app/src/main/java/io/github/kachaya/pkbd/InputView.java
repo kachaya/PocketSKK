@@ -25,10 +25,11 @@ public class InputView extends LinearLayout {
 
     private final Button[] mSymbolButton;
 
-    // シンボル入力用ビューに表示する文字[2段][8カラム]
+    // シンボル入力用ビューに表示する文字[2段][10カラム]
+    private final int SYMBOL_COLS = 10;
     private final String[][] symbolChars = {
-            {"=", "~", "{", "}", "[", "]", "<", ">"},
-            {"$", "%", "&", "^", "\\", "|", "`", ";"}
+            {"<", ">", "{", "}", "[", "]", "~", "-", ",", "."},
+            {"$", "%", "&", "=", "^", "|", "`", ";", "\\", "\u00A5"}
     };
     private Button[] mCandidateButton;
     private int mSymbolPage;
@@ -54,8 +55,8 @@ public class InputView extends LinearLayout {
         mSymbolPage = 0;
 
         int style = R.style.SymbolButton;
-        mSymbolButton = new Button[8];
-        for (int i = 0; i < 8; i++) {
+        mSymbolButton = new Button[SYMBOL_COLS];
+        for (int i = 0; i < SYMBOL_COLS; i++) {
             Button b = new Button(new ContextThemeWrapper(mContext, style), null, style);
             b.setLayoutParams(lp);
             b.setOnClickListener(v -> onClickSymbolButton((Button) v));
@@ -78,7 +79,7 @@ public class InputView extends LinearLayout {
         } else {
             mSymbolPage = 0;
         }
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < SYMBOL_COLS; i++) {
             mSymbolButton[i].setText(symbolChars[mSymbolPage][i]);
         }
     }

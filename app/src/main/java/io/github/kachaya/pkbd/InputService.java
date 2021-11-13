@@ -1,7 +1,6 @@
 package io.github.kachaya.pkbd;
 
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.text.InputType;
 import android.text.SpannableString;
@@ -61,8 +60,6 @@ public class InputService extends InputMethodService {
 
     // 表示
     private boolean mIsShowMarker;  // false:▽や▼マークを表示しない、true:表示する
-    private int mKeywordBackground;     // ▽モード背景色
-    private int mSelectBackground;      // ▼モード背景色
 
     @Override
     public void onCreate() {
@@ -83,12 +80,6 @@ public class InputService extends InputMethodService {
     }
 
     @Override
-    public void onConfigurationChanged(Configuration config) {
-        //Log.d(TAG, "onConfigurationChanged");
-        updateConfig(config);
-    }
-
-    @Override
     public void onInitializeInterface() {
         //Log.d(TAG, "onInitializeInterface");
         super.onInitializeInterface();
@@ -104,7 +95,6 @@ public class InputService extends InputMethodService {
     public void onStartInput(EditorInfo attribute, boolean restarting) {
         //Log.d(TAG, "onStartInput");
         super.onStartInput(attribute, restarting);
-        updateConfig(getResources().getConfiguration());
         startDirectHalfLatinMode();
     }
 
@@ -179,17 +169,6 @@ public class InputService extends InputMethodService {
             return true;
         }
         return super.onKeyDown(keyCode, event);
-    }
-
-    private void updateConfig(Configuration config) {
-        int nightMode = config.uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
-            mKeywordBackground = ContextCompat.getColor(this, R.color.keyword_bg_dark);
-            mSelectBackground = ContextCompat.getColor(this, R.color.select_bg_dark);
-        } else {
-            mKeywordBackground = ContextCompat.getColor(this, R.color.keyword_bg_light);
-            mSelectBackground = ContextCompat.getColor(this, R.color.select_bg_light);
-        }
     }
 
     private void icCommitText(CharSequence cs) {
@@ -448,12 +427,20 @@ public class InputService extends InputMethodService {
         mOkuriChar = '\0';
         mRomaji.setLength(0);
         setComposingTextKeyword();
-    }
+        if (mIsAbbrev) {
+            showStatusIcon(R.drawable.ic_stat_abbrev);          // アイコン表示[Aｱ]
+        } else {
+            if (mIsKatakana) {
+                showStatusIcon(R.drawable.ic_stat_katakana);    // アイコン表示[ア]
+            } else {
+                showStatusIcon(R.drawable.ic_stat_hiragana);    // アイコン表示[あ]
+            }
+        }
+     }
 
     // 「▽モード」abbrevモード開始
     private void startKeywordAbbrevMode() {
         mIsAbbrev = true;
-        showStatusIcon(R.drawable.ic_stat_abbrev);      // アイコン表示[Aｱ]
         mComposing.setLength(0);
         startKeywordMode();
     }
@@ -461,11 +448,6 @@ public class InputService extends InputMethodService {
     // 「▽モード」仮名モード開始
     private void startKeywordKanaMode() {
         mIsAbbrev = false;
-        if (mIsKatakana) {
-            showStatusIcon(R.drawable.ic_stat_katakana);    // アイコン表示[ア]
-        } else {
-            showStatusIcon(R.drawable.ic_stat_hiragana);    // アイコン表示[あ]
-        }
         mComposing.setLength(0);
         startKeywordMode();
     }
@@ -484,7 +466,8 @@ public class InputService extends InputMethodService {
                 ulStart = 1;
             }
             SpannableString ss = new SpannableString(text);
-            BackgroundColorSpan bcs = new BackgroundColorSpan(mKeywordBackground);
+            int color = ContextCompat.getColor(this, R.color.keyword_bg);
+            BackgroundColorSpan bcs = new BackgroundColorSpan(color);
             ss.setSpan(bcs, 0, ss.length(), Spanned.SPAN_COMPOSING);
             ss.setSpan(new UnderlineSpan(), ulStart, ss.length(), Spanned.SPAN_COMPOSING);
             ic.setComposingText(ss, 1);
@@ -671,7 +654,8 @@ public class InputService extends InputMethodService {
                 ulStart = 1;
             }
             SpannableString ss = new SpannableString(text);
-            BackgroundColorSpan bcs = new BackgroundColorSpan(mSelectBackground);
+            int color = ContextCompat.getColor(this, R.color.select_bg);
+            BackgroundColorSpan bcs = new BackgroundColorSpan(color);
             ss.setSpan(bcs, 0, ss.length(), Spanned.SPAN_COMPOSING);
             ss.setSpan(new UnderlineSpan(), ulStart, ss.length(), Spanned.SPAN_COMPOSING);
             ic.setComposingText(ss, 1);
