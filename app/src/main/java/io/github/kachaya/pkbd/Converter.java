@@ -419,6 +419,118 @@ public class Converter {
         }
         return sb.toString();
     }
+    
+    // 半角カタカナ変換
+    public static String toHalfKatakana(CharSequence cs) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < cs.length(); i++) {
+            char key = cs.charAt(i);
+            String val = narrowKatakanaMap.get(key);
+            if (val != null) {
+                sb.append(val);
+            } else {
+                sb.append(key);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static final HashMap<Character, String> narrowKatakanaMap = new HashMap<Character, String>() {
+        {
+            put('あ', "ｱ");
+            put('い', "ｲ");
+            put('う', "ｳ");
+            put('え', "ｴ");
+            put('お', "ｵ");
+            put('か', "ｶ");
+            put('き', "ｷ");
+            put('く', "ｸ");
+            put('け', "ｹ");
+            put('こ', "ｺ");
+            put('さ', "ｻ");
+            put('し', "ｼ");
+            put('す', "ｽ");
+            put('せ', "ｾ");
+            put('そ', "ｿ");
+            put('た', "ﾀ");
+            put('ち', "ﾁ");
+            put('つ', "ﾂ");
+            put('て', "ﾃ");
+            put('と', "ﾄ");
+            put('な', "ﾅ");
+            put('に', "ﾆ");
+            put('ぬ', "ﾇ");
+            put('ね', "ﾈ");
+            put('の', "ﾉ");
+            put('は', "ﾊ");
+            put('ひ', "ﾋ");
+            put('ふ', "ﾌ");
+            put('へ', "ﾍ");
+            put('ほ', "ﾎ");
+            put('ま', "ﾏ");
+            put('み', "ﾐ");
+            put('む', "ﾑ");
+            put('め', "ﾒ");
+            put('も', "ﾓ");
+            put('や', "ﾔ");
+            put('ゆ', "ﾕ");
+            put('よ', "ﾖ");
+            put('ら', "ﾗ");
+            put('り', "ﾘ");
+            put('る', "ﾙ");
+            put('れ', "ﾚ");
+            put('ろ', "ﾛ");
+            put('わ', "ﾜ");
+            put('を', "ｦ");
+            put('ん', "ﾝ");
+
+            put('が', "ｶﾞ");
+            put('ぎ', "ｷﾞ");
+            put('ぐ', "ｸﾞ");
+            put('げ', "ｹﾞ");
+            put('ご', "ｺﾞ");
+            put('ざ', "ｻﾞ");
+            put('じ', "ｼﾞ");
+            put('ず', "ｽﾞ");
+            put('ぜ', "ｾﾞ");
+            put('ぞ', "ｿﾞ");
+            put('だ', "ﾀﾞ");
+            put('ぢ', "ﾁﾞ");
+            put('づ', "ﾂﾞ");
+            put('で', "ﾃﾞ");
+            put('ど', "ﾄﾞ");
+            put('ば', "ﾊﾞ");
+            put('び', "ﾋﾞ");
+            put('ぶ', "ﾌﾞ");
+            put('べ', "ﾍﾞ");
+            put('ぼ', "ﾎﾞ");
+            put('ぱ', "ﾊﾟ");
+            put('ぴ', "ﾋﾟ");
+            put('ぷ', "ﾌﾟ");
+            put('ぺ', "ﾍﾟ");
+            put('ぽ', "ﾎﾟ");
+
+            put('ゔ', "ｳﾞ");
+
+            put('ぁ', "ｧ");
+            put('ぃ', "ｨ");
+            put('ぅ', "ｩ");
+            put('ぇ', "ｪ");
+            put('ぉ', "ｫ");
+            put('ゃ', "ｬ");
+            put('ゅ', "ｭ");
+            put('ょ', "ｮ");
+            put('っ', "ｯ");
+            put('ー', "ｰ");
+            put('。', "｡");
+            put('、', "､");
+            put('「', "｢");
+            put('」', "｣");
+            put('・', "･");
+            put('゛', "ﾞ");
+            put('゜', "ﾟ");
+        }
+    };
 
     // 文字を全角英数へ変換
     public static char toWideLatin(char ch) {

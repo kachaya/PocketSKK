@@ -534,6 +534,10 @@ public class InputService extends InputMethodService {
                 icCommitText(mComposing);                           // ひらがなで確定
             }
             startDirectMode();          // ■モードに戻る
+        } else if (ch == CHAR_CTRL_Q) {
+            mComposing.append(flushKeywordRomaji());
+            icCommitText(Converter.toHalfKatakana(mComposing)); // 半角カナで確定
+            startDirectMode();          // ■モードへ
         } else if (ch == 'q') {
             mComposing.append(flushKeywordRomaji());
             if (mIsKatakana) {
